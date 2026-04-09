@@ -13,6 +13,10 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     [SerializeField] public GameObject VideoPanel;
     [SerializeField] public GameObject CodePanel;
 
+    [Header("Background")]
+    [SerializeField] private GameObject bgObject;
+    [SerializeField] private GameObject bgMusic;
+
     [Header("UI Elements")]
     [SerializeField] private Dropdown resolutionDropdown;
     [SerializeField] private Toggle fullscreenToggle;
@@ -44,6 +48,8 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     private const float MouseSensitivityMin     = 0.03f;
     private const float MouseSensitivityMax     = 1f;
 
+    private const string QuizPassedKey = "QuizPassed";
+
     private void Start()
     {
         originalScale = transform.localScale;
@@ -53,11 +59,13 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
             settingsCanvasGroup = SettingsPanel.AddComponent<CanvasGroup>();
         }
 
-        MainPanel.SetActive(true);
+        // Main, BG и BG_Music управляются только через IntroPlayer.
+        // EventMenu не трогает их видимость — они уже скрыты через Awake() IntroPlayer'а.
+        MainPanel.SetActive(false);
         SettingsPanel.SetActive(false);
         GeneralPanel.SetActive(false);
         VideoPanel.SetActive(false);
-        CodePanel.SetActive(false); // Добавлено: изначально скрываем CodePanel
+        CodePanel.SetActive(false);
 
         InitializeSettings();
         SetupUIEvents();
