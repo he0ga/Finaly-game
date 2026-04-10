@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.UI;
 
 /// <summary>
@@ -76,6 +77,14 @@ public class QuizManager : MonoBehaviour
     [Range(0f, 1f)]
     public float quizBgVolume = 0.5f;
 
+    [Tooltip("Volume of the quiz background ambient sound.")]
+    [Range(0f, 1f)]
+    public AudioMixerGroup mixerGroupbg;
+
+    [Tooltip("Volume of the quiz background ambient sound.")]
+    [Range(0f, 1f)]
+    public AudioMixerGroup mixerGrouptyping;
+
     // ── Private state ──────────────────────────────────────────────────────
     private int currentIndex = 0;
     private bool isWaitingForNext = false;
@@ -139,6 +148,7 @@ public class QuizManager : MonoBehaviour
 
         typingAudioSource.playOnAwake  = false;
         typingAudioSource.spatialBlend = 0f;
+        typingAudioSource.outputAudioMixerGroup = mixerGrouptyping;
 
         // Второй AudioSource — для фонового лупа (ветер)
         bgAudioSource = gameObject.AddComponent<AudioSource>();
@@ -146,6 +156,7 @@ public class QuizManager : MonoBehaviour
         bgAudioSource.spatialBlend = 0f;
         bgAudioSource.loop         = true;
         bgAudioSource.volume       = quizBgVolume;
+        bgAudioSource.outputAudioMixerGroup = mixerGroupbg;
     }
 
     private void SetupAnswerContainer()

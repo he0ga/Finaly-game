@@ -3,7 +3,19 @@ guid: 0ff97eac00023214ca03b0ece6403c70
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - quizData: {instanceID: 0}
+  - quizPanel: {instanceID: 0}
+  - mainMenuPanel: {instanceID: 0}
+  - bgObject: {instanceID: 0}
+  - bgMusic: {instanceID: 0}
+  - questionText: {instanceID: 0}
+  - answerContainer: {instanceID: 0}
+  - feedbackText: {instanceID: 0}
+  - typingSound: {instanceID: 0}
+  - quizBgClip: {instanceID: 0}
+  - mixerGroupbg: {fileID: 8841658028718217666, guid: 4e95a107476df4747ac0c69373a8e463, type: 2}
+  - mixerGrouptyping: {fileID: 3729728185261022321, guid: 4e95a107476df4747ac0c69373a8e463, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

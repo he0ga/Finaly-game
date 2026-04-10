@@ -20,7 +20,9 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     [Header("UI Elements")]
     [SerializeField] private Dropdown resolutionDropdown;
     [SerializeField] private Toggle fullscreenToggle;
-    [SerializeField] private Slider volumeSlider;
+    [SerializeField] private Slider volumeSliderGlobal;
+    [SerializeField] private Slider volumeSliderCharecters;
+    [SerializeField] private Slider volumeSliderMusic;
     [SerializeField] private Slider mouseSensitivitySlider;
     [SerializeField] private Button saveSettingsButton;
     [SerializeField] private AudioMixer audioMixer;
@@ -40,9 +42,12 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     private Resolution[] resolutions;
     private List<Resolution> filteredResolutions;
     private int currentResolutionIndex;
-    private float currentVolume;
+    private float currentVolumeGlobal;
+    private float currentVolumeCharecters;
+    private float currentVolumeMusic;
     private bool currentFullscreen;
     private float currentMouseSensitivity;
+    private const string MouseSensitivityKey = "MouseSensitivity";
 
     private const float MouseSensitivityDefault = 0.6f;
     private const float MouseSensitivityMin     = 0.03f;
@@ -70,6 +75,15 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
         InitializeSettings();
         SetupUIEvents();
     }
+
+    private float LinearToDb(float value)
+    {
+        if (value <= 0.0001f)
+            return -80f; // практически mute
+
+        return Mathf.Log10(value) * 20f;
+    }
+
 
     private void InitializeSettings()
     {
@@ -120,7 +134,9 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
         // События для элементов управления
         resolutionDropdown.onValueChanged.AddListener(SetResolution);
         fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
-        volumeSlider.onValueChanged.AddListener(SetVolume);
+        volumeSliderGlobal.onValueChanged.AddListener(SetVolumeGlobal);
+        volumeSliderCharecters.onValueChanged.AddListener(SetVolumeCharecters);
+        volumeSliderMusic.onValueChanged.AddListener(SetVolumeMusic);
         saveSettingsButton.onClick.AddListener(SaveSettings);
 
         if (mouseSensitivitySlider != null)
@@ -381,11 +397,35 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     }
 
     // Настройка громкости
-    public void SetVolume(float volume)
+    public void SetVolumeGlobal(float volume)
     {
-        currentVolume = volume;
-        AudioListener.volume = volume;
-        Debug.Log($"Volume set to: {volume}");
+        currentVolumeGlobal = volume;
+        audioMixer.SetFloat("MasterVolume", LinearToDb(volume));
+        Debug.Log($"Global volume set to: {volume}");
+    }
+
+    public void SetVolumeCharecters(float volume)
+    {
+        currentVolumeCharecters = volume;
+        audioMixer.SetFloat("CharactersVolume", LinearToDb(volume));
+        Debug.Log($"Characters volume set to: {volume}");
+    }
+
+    public void SetVolumeMusic(float volume)
+    {
+        currentVolumeMusic = volume;
+        audioMixer.SetFloat("MusicVolume", LinearToDb(volume));
+        Debug.Log($"Music volume set to: {volume}");
+    }
+
+
+    private void ApplyMouseSensitivity(float value)
+    {
+        currentMouseSensitivity = value;
+
+        WASDMouseMovement player = FindObjectOfType<WASDMouseMovement>();
+        if (player != null)
+            player.mouseSensitivity = value;
     }
 
     /// <summary>
@@ -393,19 +433,20 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     /// </summary>
     public void SetMouseSensitivity(float value)
     {
-        currentMouseSensitivity = value;
-        WASDMouseMovement player = FindObjectOfType<WASDMouseMovement>();
-        if (player != null)
-            player.mouseSensitivity = value;
+        ApplyMouseSensitivity(value);
+        PlayerPrefs.SetFloat(MouseSensitivityKey, value);
+        PlayerPrefs.Save();
     }
 
     // Сохранение настроек
     public void SaveSettings()
     {
+        PlayerPrefs.SetFloat("VolumeGlobal", currentVolumeGlobal);
+        PlayerPrefs.SetFloat("VolumeCharacters", currentVolumeCharecters);
+        PlayerPrefs.SetFloat("VolumeMusic", currentVolumeMusic);
         PlayerPrefs.SetInt("Resolution", currentResolutionIndex);
         PlayerPrefs.SetInt("Fullscreen", currentFullscreen ? 1 : 0);
-        PlayerPrefs.SetFloat("Volume", currentVolume);
-        PlayerPrefs.SetFloat("MouseSensitivity", currentMouseSensitivity);
+        PlayerPrefs.SetFloat(MouseSensitivityKey, currentMouseSensitivity);
         PlayerPrefs.Save();
     }
 
@@ -432,26 +473,36 @@ public class EventMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
         }
 
         // Громкость
-        if (PlayerPrefs.HasKey("Volume"))
+        if (PlayerPrefs.HasKey("VolumeGlobal"))
         {
-            float volume = PlayerPrefs.GetFloat("Volume");
-            volumeSlider.value = volume;
-            SetVolume(volume);
+            float volumeGlobal = PlayerPrefs.GetFloat("VolumeGlobal");
+            volumeSliderGlobal.value = volumeGlobal;
+            SetVolumeGlobal(volumeGlobal);
+        }
+
+        if (PlayerPrefs.HasKey("VolumeCharacters"))
+        {
+            float volumeCharacters = PlayerPrefs.GetFloat("VolumeCharacters");
+            volumeSliderCharecters.value = volumeCharacters;
+            SetVolumeCharecters(volumeCharacters);
+        }
+
+        if (PlayerPrefs.HasKey("VolumeMusic"))
+        {
+            float volumeMusic = PlayerPrefs.GetFloat("VolumeMusic");
+            volumeSliderMusic.value = volumeMusic;
+            SetVolumeMusic(volumeMusic);
         }
 
         // Чувствительность мыши
-        float sensitivity = PlayerPrefs.HasKey("MouseSensitivity")
-            ? PlayerPrefs.GetFloat("MouseSensitivity")
-            : MouseSensitivityDefault;
+        float sensitivity = PlayerPrefs.HasKey(MouseSensitivityKey)
+             ? PlayerPrefs.GetFloat(MouseSensitivityKey)
+             : MouseSensitivityDefault;
 
-        currentMouseSensitivity = sensitivity;
         if (mouseSensitivitySlider != null)
-            mouseSensitivitySlider.value = sensitivity;
+            mouseSensitivitySlider.SetValueWithoutNotify(sensitivity);
 
-        // Применяем к игроку если уже загружен
-        WASDMouseMovement player = FindObjectOfType<WASDMouseMovement>();
-        if (player != null)
-            player.mouseSensitivity = sensitivity;
+        SetMouseSensitivity(sensitivity);
     }
 
     // Анимация кнопок

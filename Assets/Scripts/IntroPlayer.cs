@@ -59,12 +59,14 @@ public class IntroPlayer : MonoBehaviour
     private float skipHeldTime = 0f;
     private bool isSkipping = false;
     private bool introFinished = false;
-    private bool hasFadedOut = false;   // Защита от двойного вызова FadeOutAndShowMenu
+    private bool hasFadedOut = false;
+    private bool skipIntroAndShowMenu = false;  // true когда игрок вернулся из игровой сцены
     private CanvasGroup introPanelCanvasGroup;
     private float fillMaskFullWidth;
 
-    private const string SkipHintMessage = "Зажмите E чтобы пропустить";
-    private const string QuizPassedKey   = "QuizPassed";
+    private const string SkipHintMessage      = "Зажмите E чтобы пропустить";
+    private const string QuizPassedKey        = "QuizPassed";
+    private const string ReturnedFromGameKey  = "ReturnedFromGame";
 
     private void Awake()
     {
@@ -73,7 +75,16 @@ public class IntroPlayer : MonoBehaviour
         if (bgObject      != null) bgObject.SetActive(false);
         if (bgMusic       != null) bgMusic.SetActive(false);
 
-        // VideoPlayer lives on the same GameObject
+        // Если игрок вернулся из игровой сцены — пропускаем интро и квиз
+        if (PlayerPrefs.GetInt(ReturnedFromGameKey, 0) == 1)
+        {
+            PlayerPrefs.DeleteKey(ReturnedFromGameKey);
+            PlayerPrefs.Save();
+            skipIntroAndShowMenu = true;
+            return; // Видеоплеер не нужен — интро не будет играть
+        }
+
+        // Обычная инициализация
         videoPlayer = GetComponent<VideoPlayer>();
         if (videoPlayer == null)
             videoPlayer = gameObject.AddComponent<VideoPlayer>();
@@ -88,6 +99,14 @@ public class IntroPlayer : MonoBehaviour
 
     private void Start()
     {
+        // Игрок вернулся из игровой сцены — сразу показываем меню
+        if (skipIntroAndShowMenu)
+        {
+            if (introPanel != null) introPanel.SetActive(false);
+            ShowMainMenu();
+            return;
+        }
+
         // Hide menu, show intro
         mainMenuPanel.SetActive(false);
         introPanel.SetActive(true);
@@ -109,7 +128,7 @@ public class IntroPlayer : MonoBehaviour
 
     private void Update()
     {
-        if (introFinished || isSkipping) return;
+        if (skipIntroAndShowMenu || introFinished || isSkipping) return;
 
         if (Input.GetKey(skipKey))
         {
