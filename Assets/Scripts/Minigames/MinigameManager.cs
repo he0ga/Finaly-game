@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +11,11 @@ using UnityEngine.SceneManagement;
 public class MinigameManager : MonoBehaviour
 {
     public static MinigameManager Instance { get; private set; }
+
+    /// <summary>Fired when the game actually begins (after countdown).</summary>
+    public static event Action OnGameStarted;
+    /// <summary>Fired when the game ends for any reason (wall hit or win).</summary>
+    public static event Action OnGameEnded;
 
     [Header("References")]
     public LampaController lampa;
@@ -38,8 +44,17 @@ public class MinigameManager : MonoBehaviour
     private void Start()
     {
         lampa.SetActive(false);
-        SetPanels(startPanel: true, gameOver: false, win: false);
-        StartCoroutine(StartCountdown());
+        SetPanels(startPanel: false, gameOver: false, win: false);
+    }
+
+    /// <summary>
+    /// Starts the countdown and then enables the lamp.
+    /// Called by TutorialController when the player finishes the intro slides,
+    /// or directly if there is no TutorialController in the scene.
+    /// </summary>
+    public void StartCountdown()
+    {
+        StartCoroutine(StartCountdownCoroutine());
     }
 
     /// <summary>Called by wall colliders when the lamp touches a wall.</summary>
@@ -49,6 +64,7 @@ public class MinigameManager : MonoBehaviour
         gameStarted = false;
         lampa.SetActive(false);
         SetPanels(startPanel: false, gameOver: true, win: false);
+        OnGameEnded?.Invoke();
         StartCoroutine(RestartAfterDelay());
     }
 
@@ -59,16 +75,18 @@ public class MinigameManager : MonoBehaviour
         gameStarted = false;
         lampa.SetActive(false);
         SetPanels(startPanel: false, gameOver: false, win: true);
+        OnGameEnded?.Invoke();
 
         if (!string.IsNullOrEmpty(nextSceneName))
             StartCoroutine(LoadNextSceneAfterDelay());
     }
 
-    private IEnumerator StartCountdown()
+    private IEnumerator StartCountdownCoroutine()
     {
         if (countdownText != null)
         {
             countdownText.gameObject.SetActive(true);
+            SetPanels(startPanel: true, gameOver: false, win: false);
 
             string[] steps = { "3", "2", "1", "GO!" };
             foreach (string step in steps)
@@ -87,6 +105,7 @@ public class MinigameManager : MonoBehaviour
         SetPanels(startPanel: false, gameOver: false, win: false);
         gameStarted = true;
         lampa.SetActive(true);
+        OnGameStarted?.Invoke();
     }
 
     private IEnumerator RestartAfterDelay()
