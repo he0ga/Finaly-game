@@ -79,9 +79,18 @@ public class BatterySystem : MonoBehaviour
             if (currentHour > 6)
             {
                 nightOver = true;
-                timeText.text = "6 AM"; // ����� �������� �������� ������
-                SceneManager.LoadScene(Scene);
-                Debug.Log("���� ���������!");
+                timeText.text = "6 AM";
+
+                // Замораживаем игру — персонажи и физика останавливаются.
+                Time.timeScale = 0f;
+
+                if (SceneFader.Instance != null)
+                    SceneFader.Instance.TransitionTo(Scene);
+                else
+                {
+                    Time.timeScale = 1f;
+                    SceneManager.LoadScene(Scene);
+                }
             }
             else
             {
@@ -187,11 +196,13 @@ public class BatterySystem : MonoBehaviour
 
     public void restartGame()
     {
+        Time.timeScale = 1f;
         SceneManager.LoadScene(NightRestart);
     }
 
     public void returnMenu()
     {
+        Time.timeScale = 1f;
         PlayerPrefs.SetInt("ReturnedFromGame", 1);
         PlayerPrefs.Save();
         SceneManager.LoadScene("Menu");
