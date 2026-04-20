@@ -23,6 +23,9 @@ public class ArcadeMachineInteraction : MonoBehaviour
     [Header("UI")]
     public Text pressEText;
     public Image whiteFlashImage;
+    [Tooltip("Any UI GameObjects that should be hidden the moment the transition starts " +
+             "(e.g. DialogText, Exit_text). WhiteFlash is managed separately and must NOT be listed here.")]
+    public GameObject[] hideOnTransition;
 
     [Header("Suck-in Animation")]
     [Tooltip("Optional target point the camera flies into. " +
@@ -112,6 +115,15 @@ public class ArcadeMachineInteraction : MonoBehaviour
 
         if (pressEText != null)
             pressEText.gameObject.SetActive(false);
+
+        // Hide all UI elements that must not appear during the transition.
+        if (hideOnTransition != null)
+        {
+            foreach (GameObject obj in hideOnTransition)
+            {
+                if (obj != null) obj.SetActive(false);
+            }
+        }
 
         // Disable player movement and look
         if (playerMovement != null)
