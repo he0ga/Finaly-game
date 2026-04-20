@@ -4014,7 +4014,7 @@ MonoBehaviour:
   - {fileID: 558940192}
   RemoteControll: {fileID: 1067319450}
   timeText: {fileID: 2111849551}
-  timePerHour: 2
+  timePerHour: 10
   Scene: Dream1
   NightRestart: Night1
   Lighting: {fileID: 1357258265}
