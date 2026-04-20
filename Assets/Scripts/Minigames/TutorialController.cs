@@ -33,6 +33,10 @@ public class TutorialController : MonoBehaviour
 
     private void Start()
     {
+        // Ensure the cursor is usable while the player navigates the tutorial.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible   = true;
+
         if (slides == null || slides.Length == 0)
         {
             // No slides configured — start game immediately.

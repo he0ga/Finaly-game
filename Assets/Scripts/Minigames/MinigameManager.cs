@@ -105,6 +105,8 @@ public class MinigameManager : MonoBehaviour
         SetPanels(startPanel: false, gameOver: false, win: false);
         gameStarted = true;
         lampa.SetActive(true);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible   = false;
         OnGameStarted?.Invoke();
     }
 
